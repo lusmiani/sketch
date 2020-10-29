@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="sketch.css"/>
+</head>
+<body>
+    <h1 id = "title">SKETCHER</h1>
+    <div id = "buttons">
+        <button id = "reset" class = "button">RESET</button>
+        <button id = "straight" class = "button">STRAIGHT</button>
+    </div>
+    <div id = "container">
+
+    </div>
+</body>
+<script>
+    const container = document.querySelector("#container");
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    grid.setAttribute("id", "grid");
+    container.appendChild(grid);
+
+    for (x = 1; x <= 16; x++){  
+        for (y = 1; y <= 16; y++){
+                const square = document.createElement("div");
+                square.className = "square";
+                square.setAttribute("id", "squareEmpty")
+                grid.appendChild(square);
+            }
+        }  
+    container.appendChild(grid);
+    
+    function generateGrid(z){
+        x = 0;
+        y = 0;
+        if (z > 100){
+            z = 100;
+        }
+        size = (720 / z);
+        for (x = 1; x <= z; x++){
+            for (y = 1; y <=z; y++){
+                square = document.createElement("div");
+                square.className = "square";
+                square.setAttribute("id", "squareEmpty");
+                grid.appendChild(square);
+                square.style.height = size + "px";
+                square.style.width = size + "px";
+            }
+        }  
+        container.appendChild(grid);   
+    }
+
+    function RGBToHSL(rgb) {
+        let sep = rgb.indexOf(",") > -1 ? "," : " ";
+        rgb = rgb.substr(4).split(")")[0].split(sep);
+
+        for (let R in rgb) {
+            let r = rgb[R];
+            if (r.indexOf("%") > -1){
+                rgb[R] = Math.round(r.substr(0,r.length - 1) / 100 * 255);
+            }
+        }
+        // Make r, g, and b fractions of 1
+        let r = rgb[0] / 255,
+            g = rgb[1] / 255,
+            b = rgb[2] / 255;
+        
+        let cmin = Math.min(r,g,b),
+            cmax = Math.max(r,g,b),
+            delta = cmax - cmin,
+            h = 0,
+            s = 0,
+            l = 0;
+
+        if (delta == 0){
+            h = 0;
+            // Red is max
+        }else if (cmax == r){
+            h = ((g - b) / delta) % 6;
+            // Green is max
+        }else if (cmax == g){
+            h = (b - r) / delta + 2;
+            // Blue is max
+        }else
+            h = (r - g) / delta + 4;
+
+            h = Math.round(h * 60);
+
+        // Make negative hues positive behind 360°
+        if (h < 0){
+            h += 360;
+        }
+        // Calculate lightness
+        l = (cmax + cmin) / 2;
+
+        // Calculate saturation
+        s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+  
+        // Multiply l and s by 100
+        s = +(s * 100).toFixed(1);
+        l = +(l * 100).toFixed(1);
+
+        return "hsl(" + h + "," + s + "%," + l + "%)";
+    }
+
+    function darken(hsl){
+        let sep = hsl.indexOf(",") > -1 ? "," : " ";
+        hsl = hsl.substr(4).split(")")[0].split(sep);
+
+        let h = hsl[0],
+            s = hsl[1].substr(0,hsl[1].length - 1),
+            l = hsl[2].substr(0,hsl[2].length - 1);
+        
+        x = parseInt(l / 10, 10) * 10;
+        z = x / 10;
+        console.log("l ="+ l);
+        console.log("x =" + x);
+
+        return "hsl(" + h + "," + s + "%," + (x - z) + "%)";
+    }
+
+    function randomColor(){
+	    let hue = Math.floor(Math.random() * 360);
+	    let saturation = Math.floor(Math.random() * 100);
+	    let lightness = 80;
+	    return "hsl(" +hue+ ", " +saturation+ "%, " + lightness+ "%)";
+    }
+    function toggleSwitch(){
+        if(toggle.id === "straight"){
+            toggle.style.backgroundColor = randomColor();
+            toggle.style.width = "49%";
+            toggle.id = "funky";
+            toggle.textContent = "FUNKY"
+            grid.id = "funkyGrid"
+        }else if(toggle.id === "funky"){
+            toggle.style.color = "";
+            toggle.style.backgroundColor = "";
+            toggle.style.outline = "none";
+            toggle.style.width = "49%";
+            toggle.id = "straight";
+            toggle.textContent = "STRAIGHT"
+            grid.id = "grid"
+        }
+    }
+
+    function changeSquare(e){
+        var sq = e.target;
+
+        if (sq.id === "squareEmpty" || sq.id === "squareFull"){
+            sq.style.backgroundColor = "black";
+            sq.id = "squareBlack";
+        }
+    }
+
+    function funkSquare(e){
+        var sq = e.target;
+        color = randomColor();
+        
+        if (sq.id === "squareEmpty" || sq.id === "squareBlack"){
+            sq.style.backgroundColor = color;
+            sq.id = "squareFull";
+        }else if (sq.id === "squareFull"){
+            hsl = RGBToHSL(sq.style.backgroundColor);
+            darker = darken(hsl);
+            sq.style.backgroundColor = darker;
+        }
+    }
+
+    const reset = document.querySelector("#reset");
+    
+    reset.addEventListener("click", function(){
+        z = parseInt(prompt("Reset grid size"));
+        if (z !== z){
+            z = 16;
+        }
+        while (grid.firstChild){
+            grid.removeChild(grid.lastChild);
+        }generateGrid(z);
+    });
+
+    const toggle = document.querySelector("#straight");
+    
+    toggle.addEventListener("click", function(){
+      toggleSwitch();
+    });
+
+    const squares = document.querySelector(".grid");
+
+    squares.addEventListener("mouseover", function(e) {
+        
+        if(squares.id === "grid"){
+            if(e.target.id === "squareEmpty" || e.target.id === "squareBlack" || e.target.id === "squareFull"){
+                changeSquare(e);
+            }
+        }else if(squares.id === "funkyGrid"){
+            if(e.target.id === "squareEmpty" || e.target.id === "squareBlack" || e.target.id === "squareFull"){
+                funkSquare(e);
+            }
+        }
+    });
+</script>
+</html>
